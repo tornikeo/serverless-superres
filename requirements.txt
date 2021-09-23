@@ -2,3 +2,4 @@ timm
 numpy
 torch
 opencv-python-headless
+Pillow
