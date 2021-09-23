@@ -18,7 +18,7 @@ def inference(img):
         
 title = "SwinIR"
 description = "Gradio demo for SwinIR. To use it, simply upload your image, or click one of the examples to load them. Read more at the links below."
-article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2108.10257'>SwinIR: Image Restoration Using Swin Transformer</a> | <a href='https://github.com/JingyunLiang/SwinIR'>Github Repo</a></p>"
+article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2108.10257' target='_blank'>SwinIR: Image Restoration Using Swin Transformer</a> | <a href='https://github.com/JingyunLiang/SwinIR' target='_blank'>Github Repo</a></p>"
 gr.Interface(
     inference, 
     [gr.inputs.Image(type="pil", label="Input")], 
