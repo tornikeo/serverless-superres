@@ -14,7 +14,7 @@ def inference(img):
     img = img.resize((basewidth,hsize), Image.ANTIALIAS)
     img.save("test/1.jpg", "JPEG")
     os.system('python main_test_swinir.py --task real_sr --model_path experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth --folder_lq test --scale 4')
-    return 'results/swinir_real_sr_x4/1_SwinIR.jpg'
+    return 'results/swinir_real_sr_x4/1_SwinIR.png'
         
 title = "Real-ESRGAN"
 description = "Gradio demo for Real-ESRGAN. To use it, simply upload your image, or click one of the examples to load them. Read more at the links below. Please click submit only once"
