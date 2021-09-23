@@ -16,9 +16,9 @@ def inference(img):
     os.system('python main_test_swinir.py --task real_sr --model_path experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth --folder_lq test --scale 4')
     return 'results/swinir_real_sr_x4/1_SwinIR.png'
         
-title = "Real-ESRGAN"
-description = "Gradio demo for Real-ESRGAN. To use it, simply upload your image, or click one of the examples to load them. Read more at the links below. Please click submit only once"
-article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2107.10833'>Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data</a> | <a href='https://github.com/xinntao/Real-ESRGAN'>Github Repo</a></p>"
+title = "SwinIR"
+description = "Gradio demo for SwinIR. To use it, simply upload your image, or click one of the examples to load them. Read more at the links below."
+article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2108.10257'>SwinIR: Image Restoration Using Swin Transformer</a> | <a href='https://github.com/JingyunLiang/SwinIR'>Github Repo</a></p>"
 gr.Interface(
     inference, 
     [gr.inputs.Image(type="pil", label="Input")], 
