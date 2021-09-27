@@ -20,7 +20,7 @@ title = "SwinIR"
 description = "Gradio demo for SwinIR. SwinIR achieves state-of-the-art performance on six tasks: image super-resolution (including classical, lightweight and real-world image super-resolution), image denoising (including grayscale and color image denoising) and JPEG compression artifact reduction. See the paper and project page for detailed results. Here, we provide a demo for real-world image SR.To use it, simply upload your image, or click one of the examples to load them. Read more at the links below."
 article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2108.10257' target='_blank'>SwinIR: Image Restoration Using Swin Transformer</a> | <a href='https://github.com/JingyunLiang/SwinIR' target='_blank'>Github Repo</a></p>"
 
-examples=[['']]
+examples=[['ETH_LR.png']]
 gr.Interface(
     inference, 
     [gr.inputs.Image(type="pil", label="Input")], 
@@ -28,5 +28,6 @@ gr.Interface(
     title=title,
     description=description,
     article=article,
-    enable_queue=True
+    enable_queue=True,
+    examples=examples
     ).launch(debug=True)
