@@ -17,7 +17,7 @@ def inference(img):
     return 'results/swinir_real_sr_x4/1_SwinIR.png'
         
 title = "SwinIR"
-description = "Gradio demo for SwinIR. SwinIR achieves state-of-the-art performance on six tasks: image super-resolution (including classical, lightweight and real-world image super-resolution), image denoising (including grayscale and color image denoising) and JPEG compression artifact reduction. See the <a href='https://arxiv.org/abs/2108.10257' target='_blank'>paper</a> and <a href='https://github.com/JingyunLiang/SwinIR' target='_blank'>project page</a> for detailed results. Here, we provide a demo for real-world image SR.To use it, simply upload your image, or click one of the examples to load them. Read more at the links below."
+description = "Gradio demo for SwinIR. SwinIR achieves state-of-the-art performance on six tasks: image super-resolution (including classical, lightweight and real-world image super-resolution), image denoising (including grayscale and color image denoising) and JPEG compression artifact reduction. See the paper and project page for detailed results below. Here, we provide a demo for real-world image SR.To use it, simply upload your image, or click one of the examples to load them."
 article = "<p style='text-align: center'><a href='https://arxiv.org/abs/2108.10257' target='_blank'>SwinIR: Image Restoration Using Swin Transformer</a> | <a href='https://github.com/JingyunLiang/SwinIR' target='_blank'>Github Repo</a></p>"
 
 examples=[['ETH_LR.png']]
