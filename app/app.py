@@ -1,7 +1,7 @@
 from transformers import pipeline
 import torch
 import os
-import gradio as gr
+# import gradio as gr
 from PIL import Image
 
 # Init is ran on server startup
@@ -9,8 +9,8 @@ from PIL import Image
 def init():
     global model
     
-    device = 0 if torch.cuda.is_available() else -1
-    model = pipeline('fill-mask', model='bert-base-uncased', device=device)
+    # device = 0 if torch.cuda.is_available() else -1
+    # model = pipeline('fill-mask', model='bert-base-uncased', device=device)
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.

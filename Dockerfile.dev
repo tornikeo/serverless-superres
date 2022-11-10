@@ -8,5 +8,5 @@ WORKDIR /code/app
 COPY experiments .
 EXPOSE 8000
 WORKDIR /code/app
-COPY . .
-ENTRYPOINT /bin/bash
+COPY app .
+CMD python3 -u app/server.py
