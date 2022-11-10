@@ -3,27 +3,61 @@ import torch
 import os
 # import gradio as gr
 from PIL import Image
+from main_test_swinir import \
+    define_model, get_default_args, get_image_pair, setup
+import requests
+import tempfile
+
+import numpy as np
+import torch
+
+def wget(url: str, path: str) -> str:
+    r = requests.get(url, allow_redirects=True)
+    print(f'downloading file {url} to {path}')
+    open(path, 'wb').write(r.content)
+    return path
 
 # Init is ran on server startup
 # Load your model to GPU as a global variable here using the variable name "model"
 def init():
     global model
-    
-    # device = 0 if torch.cuda.is_available() else -1
-    # model = pipeline('fill-mask', model='bert-base-uncased', device=device)
+    global args
+    args = get_default_args()
+    args.task = "real_sr"
+    args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth"
+    args.folder_lq = "test"
+    args.scale = 4
+    model = define_model(args)
+    model.eval()
+    # model = model.half()
+    model = model.to('cuda')
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
 def inference(model_inputs:dict) -> dict:
     global model
-
+    global args
     # Parse out your arguments
-    prompt = model_inputs.get('prompt', None)
-    if prompt == None:
-        return {'message': "No prompt provided"}
+    ## Prompt: {"image": "http://something.com/img.jpg"}
     
-    # Run the model
-    result = model(prompt)
+    with tempfile.TemporaryDirectory() as tmp:
+        path = wget(model_inputs['image'], tmp + 'image.jpg')
+        folder, save_dir, border, window_size = setup(args)
+        imgname, img_lq, img_gt = get_image_pair(args, path)
+        
+        img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
+        img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
+
+        # inference
+        with torch.no_grad():
+            # pad input image to be a multiple of window_size
+            _, _, h_old, w_old = img_lq.size()
+            h_pad = (h_old // window_size + 1) * window_size - h_old
+            w_pad = (w_old // window_size + 1) * window_size - w_old
+            img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
+            img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
+            output = model(img_lq)
+            output = output[..., :h_old * args.scale, :w_old * args.scale]
 
     # Return the results as a dictionary
     return result

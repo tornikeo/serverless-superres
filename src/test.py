@@ -3,8 +3,13 @@
 
 import requests
 
-model_inputs = {'prompt': 'Hello I am a [MASK] model.'}
+model_inputs = {'image': 'https://i.imgur.com/dGiiSdo.png'}
 
 res = requests.post('http://localhost:8000/', json = model_inputs)
 
 print(res.json())
+
+# from main_test_swinir import main
+# main()
+# from app import init
+# init()
