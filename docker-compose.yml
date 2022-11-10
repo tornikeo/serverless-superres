@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        - DEV_OPTIONS=true
+    volumes:
+      - .:/code/app
+    ports:
+      - 8000:8000
+    environment:
+      - DEV_OPTIONS=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
