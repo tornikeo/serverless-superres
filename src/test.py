@@ -3,7 +3,7 @@
 
 import requests
 
-model_inputs = {'image': 'https://i.imgur.com/dGiiSdo.png'}
+model_inputs = {'image': 'https://i.imgur.com/IdcBNz7.jpg'}
 
 res = requests.post('http://localhost:8000/', json = model_inputs)
 

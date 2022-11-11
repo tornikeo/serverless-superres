@@ -1,0 +1,42 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "Sanic: Server",
+        //     "type": "python",
+        //     "request": "launch",
+        //     "program": "src/server.py",
+        //     "cwd": "/code/app",
+        //     "console": "integratedTerminal",
+        //     "justMyCode": true
+        // },
+        {
+            "name": "Sanic: Module",
+
+            "type": "python",
+            "request": "launch",
+            "module": "sanic",
+            "cwd": "/code/app",
+            "console": "integratedTerminal",
+            "args": [
+                "src.server.server",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--debug"
+            ],
+            "justMyCode": true,
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "src/test.py",
+            "cwd": "/code/app",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ],
+    "compounds": []
+}

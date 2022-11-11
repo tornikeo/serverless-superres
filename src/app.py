@@ -3,7 +3,7 @@ import torch
 import os
 # import gradio as gr
 from PIL import Image
-from main_test_swinir import \
+from src.main_test_swinir import \
     define_model, get_default_args, get_image_pair, setup
 import requests
 import tempfile
@@ -22,15 +22,12 @@ def wget(url: str, path: str) -> str:
 def init():
     global model
     global args
-    args = get_default_args()
-    args.task = "real_sr"
-    args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth"
-    args.folder_lq = "test"
-    args.scale = 4
-    model = define_model(args)
-    model.eval()
-    # model = model.half()
-    model = model.to('cuda')
+    if 'model' not in globals():
+        args = get_default_args()
+        model = define_model(args)
+        model.eval()
+        # model = model.half()
+        model = model.to('cuda')
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
