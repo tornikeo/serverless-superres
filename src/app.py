@@ -10,6 +10,11 @@ import tempfile
 
 import numpy as np
 import torch
+import cv2 
+from io import BytesIO
+import os.path as osp
+import base64
+
 
 def wget(url: str, path: str) -> str:
     r = requests.get(url, allow_redirects=True)
@@ -27,6 +32,7 @@ def init():
         model = define_model(args)
         model.eval()
         # model = model.half()
+        # model = model.half()
         model = model.to('cuda')
 
 # Inference is ran for every server call
@@ -38,12 +44,14 @@ def inference(model_inputs:dict) -> dict:
     ## Prompt: {"image": "http://something.com/img.jpg"}
     
     with tempfile.TemporaryDirectory() as tmp:
-        path = wget(model_inputs['image'], tmp + 'image.jpg')
+        path = wget(model_inputs['image'], osp.join(tmp, 'image.jpg'))
         folder, save_dir, border, window_size = setup(args)
-        imgname, img_lq, img_gt = get_image_pair(args, path)
+        _, img_lq, _ = get_image_pair(args, path)
         
         img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
         img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
+        # img_lq = img_lq.half()
+
 
         # inference
         with torch.no_grad():
@@ -55,9 +63,17 @@ def inference(model_inputs:dict) -> dict:
             img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
             output = model(img_lq)
             output = output[..., :h_old * args.scale, :w_old * args.scale]
+        output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+        if output.ndim == 3:
+            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))  # CHW-RGB to HCW-BGR
+        output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
 
+        cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
+        image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
+
+    # # Return the results as a dictionary
+    return {'image_base64': image_base64}
     # Return the results as a dictionary
-    return result
 # os.system('wget https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth -P experiments/pretrained_models')
 
 # def inference(img):

@@ -2,10 +2,15 @@
 # Run it with `python3 test.py``
 
 import requests
-
+import time
 model_inputs = {'image': 'https://i.imgur.com/IdcBNz7.jpg'}
+while True:
+    try:
+        res = requests.post('http://localhost:8000/', json = model_inputs)
+        break
+    except:
+        time.sleep(.5)
 
-res = requests.post('http://localhost:8000/', json = model_inputs)
 
 print(res.json())
 
