@@ -16,9 +16,11 @@ def get_default_args():
     args.scale = 4
     args.noise = 15
     args.jpeg = 40
-    args.training_patch_size = 128
+    args.training_patch_size = 128 // 2
     args.large_model = False
     args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth"
+    # args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"
+    # args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN-with-dict-keys-params-and-params_ema.pth"
     args.folder_lq = "test"
     args.folder_gt = None
     return args

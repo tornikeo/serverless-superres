@@ -31,8 +31,7 @@ def init():
         args = get_default_args()
         model = define_model(args)
         model.eval()
-        # model = model.half()
-        # model = model.half()
+        model = model.half()
         model = model.to('cuda')
 
 # Inference is ran for every server call
@@ -50,8 +49,6 @@ def inference(model_inputs:dict) -> dict:
         
         img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
         img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
-        # img_lq = img_lq.half()
-
 
         # inference
         with torch.no_grad():
@@ -61,7 +58,7 @@ def inference(model_inputs:dict) -> dict:
             w_pad = (w_old // window_size + 1) * window_size - w_old
             img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
             img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
-            output = model(img_lq)
+            output = model(img_lq.half())
             output = output[..., :h_old * args.scale, :w_old * args.scale]
         output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
         if output.ndim == 3:
@@ -69,6 +66,7 @@ def inference(model_inputs:dict) -> dict:
         output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
 
         cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
+        print(f"Writing image at {osp.join(tmp, 'image_superres.jpg')}")
         image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
 
     # # Return the results as a dictionary

@@ -7,7 +7,6 @@ model_inputs = {'image': 'https://i.imgur.com/IdcBNz7.jpg'}
 while True:
     try:
         res = requests.post('http://localhost:8000/', json = model_inputs)
-        break
     except:
         time.sleep(.5)
 

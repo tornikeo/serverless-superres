@@ -480,7 +480,16 @@ class RSTB(nn.Module):
             norm_layer=None)
 
     def forward(self, x, x_size):
-        return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
+        # return self.patch_embed(self.conv(self.patch_unembed(self.residual_group(x, x_size), x_size))) + x
+        shortcut = x
+        x = self.residual_group(x, x_size)
+        x = self.patch_unembed(x, x_size)
+        x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        x = self.conv(x)
+        x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        x = self.patch_embed(x) + shortcut
+        x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        return x
 
     def flops(self):
         flops = 0
@@ -789,7 +798,7 @@ class SwinIR(nn.Module):
 
         for layer in self.layers:
             x = layer(x, x_size)
-
+        
         x = self.norm(x)  # B L C
         x = self.patch_unembed(x, x_size)
 
