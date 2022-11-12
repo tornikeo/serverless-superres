@@ -1,6 +1,4 @@
 sanic==22.6.2
-transformers
-accelerate
 timm
 numpy
 torch
