@@ -69,7 +69,6 @@ def inference(model_inputs:dict) -> dict:
             cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
             print(f"Writing image at {osp.join(tmp, 'image_superres.jpg')}")
             image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
-        1 / 0
         # # Return the results as a dictionary
         return {'image_base64': image_base64}
     except Exception as e:
