@@ -14,6 +14,7 @@ import cv2
 from io import BytesIO
 import os.path as osp
 import base64
+import traceback
 
 
 def wget(url: str, path: str) -> str:
@@ -41,36 +42,40 @@ def inference(model_inputs:dict) -> dict:
     global args
     # Parse out your arguments
     ## Prompt: {"image": "http://something.com/img.jpg"}
-    
-    with tempfile.TemporaryDirectory() as tmp:
-        path = wget(model_inputs['image'], osp.join(tmp, 'image.jpg'))
-        folder, save_dir, border, window_size = setup(args)
-        _, img_lq, _ = get_image_pair(args, path)
-        
-        img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
-        img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = wget(model_inputs['image'], osp.join(tmp, 'image.jpg'))
+            folder, save_dir, border, window_size = setup(args)
+            _, img_lq, _ = get_image_pair(args, path)
+            
+            img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
+            img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
 
-        # inference
-        with torch.no_grad():
-            # pad input image to be a multiple of window_size
-            _, _, h_old, w_old = img_lq.size()
-            h_pad = (h_old // window_size + 1) * window_size - h_old
-            w_pad = (w_old // window_size + 1) * window_size - w_old
-            img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
-            img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
-            output = model(img_lq.half())
-            output = output[..., :h_old * args.scale, :w_old * args.scale]
-        output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
-        if output.ndim == 3:
-            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))  # CHW-RGB to HCW-BGR
-        output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
+            # inference
+            with torch.no_grad():
+                # pad input image to be a multiple of window_size
+                _, _, h_old, w_old = img_lq.size()
+                h_pad = (h_old // window_size + 1) * window_size - h_old
+                w_pad = (w_old // window_size + 1) * window_size - w_old
+                img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
+                img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
+                output = model(img_lq.half())
+                output = output[..., :h_old * args.scale, :w_old * args.scale]
+            output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+            if output.ndim == 3:
+                output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))  # CHW-RGB to HCW-BGR
+            output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
 
-        cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
-        print(f"Writing image at {osp.join(tmp, 'image_superres.jpg')}")
-        image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
-
-    # # Return the results as a dictionary
-    return {'image_base64': image_base64}
+            cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
+            print(f"Writing image at {osp.join(tmp, 'image_superres.jpg')}")
+            image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
+        1 / 0
+        # # Return the results as a dictionary
+        return {'image_base64': image_base64}
+    except Exception as e:
+        tb_str = traceback.format_exception(etype=type(e), 
+            value=e, tb=e.__traceback__)
+        return {"error": "".join(tb_str)}
     # Return the results as a dictionary
 # os.system('wget https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth -P experiments/pretrained_models')
 
