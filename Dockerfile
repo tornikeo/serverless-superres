@@ -1,30 +1,12 @@
-FROM tornikeo/superres-app:latest
-
-# Must use a Cuda version 11+
-# FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
-
-# WORKDIR /
-
-# # Install git
-# RUN apt-get update && apt-get install -y git
-
-# # Install python packages
-# RUN pip3 install --upgrade pip
-# ADD requirements.txt requirements.txt
-# RUN pip3 install -r requirements.txt
-
-# # We add the banana boilerplate here
-# ADD server.py .
-
-# # Add your model weight files 
-# # (in this case we have a python script)
-# ADD download.py .
-# RUN python3 download.py
-
-
-# # Add your custom app code, init() and inference()
-# ADD app.py .
-
-# EXPOSE 8000
-
-# CMD python3 -u server.py
+FROM huggingface/transformers-pytorch-gpu@sha256:6e276dfc6e6cac6a0bb9167e5e7536a975e394b5a7a9907c480affdf3c44640e
+RUN apt update
+RUN apt-get install -y libgl1-mesa-glx libglib2.0-0 git wget
+WORKDIR /code
+COPY requirements.txt .
+RUN pip install --no-cache -r requirements.txt
+WORKDIR /code/app
+COPY experiments .
+EXPOSE 8000
+WORKDIR /code/app
+COPY app .
+CMD python3 -u app/server.py
