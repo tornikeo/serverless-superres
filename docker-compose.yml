@@ -9,10 +9,10 @@ services:
     volumes:
       - .:/code/app
     ports:
-      - 8000:8000
+      - 9000:8000
     environment:
       - DEV_OPTIONS=true
-    command: /bin/bash
+    # command: /bin/bash
     deploy:
       resources:
         reservations:
