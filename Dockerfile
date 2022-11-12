@@ -5,9 +5,11 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip install --no-cache -r requirements.txt
 WORKDIR /code/app/experiments/pretrained_models
-COPY experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth .
+# COPY experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth .
+RUN wget https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth \
+    -P .
 EXPOSE 8000
-WORKDIR /code/app
-COPY src .
+WORKDIR /code/app/
+COPY src src
 # CMD python3 -u src/server.py
-ENTRYPOINT sanic src.server:server --host 0.0.0.0 --port 8000 --debug
+ENTRYPOINT sanic src.server:server --host 0.0.0.0 --port 8000
