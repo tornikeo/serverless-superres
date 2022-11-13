@@ -41,12 +41,14 @@ def inference(model_inputs:dict) -> dict:
     global model
     global args
     # Parse out your arguments
-    ## Prompt: {"image": "http://something.com/img.jpg"}
+    ## Prompt: {"image_base64": "http://something.com/img.jpg"}
     try:
         with tempfile.TemporaryDirectory() as tmp:
-            path = wget(model_inputs['image'], osp.join(tmp, 'image.jpg'))
+            img_path = osp.join(tmp, 'image.jpg')
+            open(img_path,'wb').write(base64.b64decode(model_inputs['image_base64'].encode('utf-8')))
+            print(f'Writing base64 to {img_path}')
             folder, save_dir, border, window_size = setup(args)
-            _, img_lq, _ = get_image_pair(args, path)
+            _, img_lq, _ = get_image_pair(args, img_path)
             
             img_lq = np.transpose(img_lq if img_lq.shape[2] == 1 else img_lq[:, :, [2, 1, 0]], (2, 0, 1))  # HCW-BGR to CHW-RGB
             img_lq = torch.from_numpy(img_lq).unsqueeze(0).to('cuda')  # CHW-RGB to NCHW-RGB
@@ -59,22 +61,28 @@ def inference(model_inputs:dict) -> dict:
                 w_pad = (w_old // window_size + 1) * window_size - w_old
                 img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
                 img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
-                output = model(img_lq.half())
+                print(f"Image IN size is {img_lq.shape}")
+                # output = model(img_lq.half())
+                img_lq = img_lq.half()
+                output = model(img_lq)
                 output = output[..., :h_old * args.scale, :w_old * args.scale]
+                print(f"Image OUT size is {output.shape}")
             output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
             if output.ndim == 3:
                 output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))  # CHW-RGB to HCW-BGR
             output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
-
-            cv2.imwrite(osp.join(tmp, 'image_superres.jpg'), output)
-            print(f"Writing image at {osp.join(tmp, 'image_superres.jpg')}")
-            image_base64 = base64.b64encode(open(osp.join(tmp, 'image_superres.jpg'),'rb').read()).decode('utf-8')
+            superres_img_path = osp.join(tmp, 'image_superres.jpg')
+            cv2.imwrite(superres_img_path, output)
+            print(f"Writing image at {superres_img_path}")
+            image_base64 = base64.b64encode(open(superres_img_path,'rb').read()).decode('utf-8')
         # # Return the results as a dictionary
         return {'image_base64': image_base64}
     except Exception as e:
         tb_str = traceback.format_exception(etype=type(e), 
             value=e, tb=e.__traceback__)
         return {"error": "".join(tb_str)}
+    finally:
+        torch.cuda.empty_cache()
     # Return the results as a dictionary
 # os.system('wget https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth -P experiments/pretrained_models')
 
