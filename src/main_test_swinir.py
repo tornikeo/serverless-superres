@@ -16,16 +16,19 @@ def get_default_args():
     args.scale = 4
     args.noise = 15
     args.jpeg = 40
-    args.training_patch_size = 128 // 2
-    args.large_model = False
-    args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth"
-    # args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"
+    args.training_patch_size = 128
+    # args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x4_GAN.pth"
+    # args.large_model = False
+
+    args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth"
+    args.large_model = True
+
     # args.model_path = "experiments/pretrained_models/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN-with-dict-keys-params-and-params_ema.pth"
     args.folder_lq = "test"
     args.folder_gt = None
     return args
 
-def main():
+def main(): 
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type=str, default='color_dn', help='classical_sr, lightweight_sr, real_sr, '
                                                                      'gray_dn, color_dn, jpeg_car')
@@ -151,13 +154,13 @@ def define_model(args):
     elif args.task == 'real_sr':
         if not args.large_model:
             # use 'nearest+conv' to avoid block artifacts
-            model = net(upscale=4, in_chans=3, img_size=64, window_size=8,
+            model = net(upscale=args.scale, in_chans=3, img_size=64, window_size=8,
                         img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
                         mlp_ratio=2, upsampler='nearest+conv', resi_connection='1conv')
         else:
             # larger model size; use '3conv' to save parameters and memory; use ema for GAN training
-            model = net(upscale=4, in_chans=3, img_size=64, window_size=8,
-                        img_range=1., depths=[6, 6, 6, 6, 6, 6, 6, 6, 6], embed_dim=248,
+            model = net(upscale=args.scale, in_chans=3, img_size=64, window_size=8,
+                        img_range=1., depths=[6, 6, 6, 6, 6, 6, 6, 6, 6], embed_dim=240,
                         num_heads=[8, 8, 8, 8, 8, 8, 8, 8, 8],
                         mlp_ratio=2, upsampler='nearest+conv', resi_connection='3conv')
         param_key_g = 'params_ema'

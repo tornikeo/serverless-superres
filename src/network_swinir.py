@@ -6,6 +6,7 @@
 import math
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
@@ -484,11 +485,17 @@ class RSTB(nn.Module):
         shortcut = x
         x = self.residual_group(x, x_size)
         x = self.patch_unembed(x, x_size)
-        x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        if x.dtype == torch.float16: 
+            x.clamp_(-(2**16 - 64), +(2**16 - 64))
         x = self.conv(x)
-        x.clamp_(-(2**16 - 64), +(2**16 - 64))
-        x = self.patch_embed(x) + shortcut
-        x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        if x.dtype == torch.float16: 
+            x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        x = self.patch_embed(x) 
+        if x.dtype == torch.float16: 
+            x.clamp_(-(2**16 - 64), +(2**16 - 64))
+        x = x + shortcut
+        if x.dtype == torch.float16: 
+            x.clamp_(-(2**16 - 64), +(2**16 - 64))
         return x
 
     def flops(self):
@@ -672,6 +679,7 @@ class SwinIR(nn.Module):
             self.mean = torch.zeros(1, 1, 1, 1)
         self.upscale = upscale
         self.upsampler = upsampler
+        self.window_size = window_size
 
         #####################################################################################################
         ################################### 1, shallow feature extraction ###################################
@@ -758,11 +766,11 @@ class SwinIR(nn.Module):
                                             (patches_resolution[0], patches_resolution[1]))
         elif self.upsampler == 'nearest+conv':
             # for real-world SR (less artifacts)
-            assert self.upscale == 4, 'only support x4 now.'
             self.conv_before_upsample = nn.Sequential(nn.Conv2d(embed_dim, num_feat, 3, 1, 1),
                                                       nn.LeakyReLU(inplace=True))
             self.conv_up1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
-            self.conv_up2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
+            if self.upscale == 4:
+                self.conv_up2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
             self.conv_hr = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
             self.conv_last = nn.Conv2d(num_feat, num_out_ch, 3, 1, 1)
             self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
@@ -789,6 +797,13 @@ class SwinIR(nn.Module):
     def no_weight_decay_keywords(self):
         return {'relative_position_bias_table'}
 
+    def check_image_size(self, x):
+        _, _, h, w = x.size()
+        mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
+        mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        return x
+
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
         x = self.patch_embed(x)
@@ -798,13 +813,16 @@ class SwinIR(nn.Module):
 
         for layer in self.layers:
             x = layer(x, x_size)
-        
+
         x = self.norm(x)  # B L C
         x = self.patch_unembed(x, x_size)
 
         return x
 
     def forward(self, x):
+        H, W = x.shape[2:]
+        x = self.check_image_size(x)
+        
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
 
@@ -825,7 +843,8 @@ class SwinIR(nn.Module):
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
-            x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
+            if self.upscale == 4:
+                x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
         else:
             # for image denoising and JPEG compression artifact reduction
@@ -835,7 +854,7 @@ class SwinIR(nn.Module):
 
         x = x / self.img_range + self.mean
 
-        return x
+        return x[:, :, :H*self.upscale, :W*self.upscale]
 
     def flops(self):
         flops = 0
