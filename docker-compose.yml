@@ -12,7 +12,7 @@ services:
       - 9000:8000
     environment:
       - DEV_OPTIONS=true
-    entrypoint: /bin/bash
+    # entrypoint: /bin/bash
     # command: /bin/bash
     deploy:
       resources:
