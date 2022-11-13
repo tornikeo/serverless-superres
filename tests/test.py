@@ -3,9 +3,12 @@
 
 import requests
 import time
-model_inputs = {'image': 'https://i.imgur.com/IdcBNz7.jpg'}
+import utils
+
+
 while True:
     try:
+        model_inputs = {'image_base64': utils.read_b64('./ETH_LR_sm.png')}
         res = requests.post('http://localhost:8000/', json = model_inputs)
     except:
         time.sleep(.5)
