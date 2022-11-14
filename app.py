@@ -26,12 +26,11 @@ def wget(url: str, path: str) -> str:
 # Load your model to GPU as a global variable here using the variable name "model"
 def init():
     global model
-    if 'model' not in globals():
-        args = get_default_args()
-        model = define_model(args)
-        model.eval()
-        model = model.half()
-        model = model.to('cuda')
+    args = get_default_args()
+    model = define_model(args)
+    model.eval()
+    model = model.half()
+    model = model.to('cuda')
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
