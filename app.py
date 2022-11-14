@@ -26,7 +26,6 @@ def wget(url: str, path: str) -> str:
 # Load your model to GPU as a global variable here using the variable name "model"
 def init():
     global model
-    global args
     if 'model' not in globals():
         args = get_default_args()
         model = define_model(args)
@@ -38,7 +37,6 @@ def init():
 # Reference your preloaded global model variable here.
 def inference(model_inputs:dict) -> dict:
     global model
-    global args
     # Parse out your arguments
     ## Prompt: {"image_base64": "http://something.com/img.jpg"}
     try:
@@ -46,6 +44,7 @@ def inference(model_inputs:dict) -> dict:
             img_path = osp.join(tmp, 'image.jpg')
             open(img_path,'wb').write(base64.b64decode(model_inputs['image_base64'].encode('utf-8')))
             print(f'Writing base64 to {img_path}')
+            args = get_default_args()
             folder, save_dir, border, window_size = setup(args)
             _, img_lq, _ = get_image_pair(args, img_path)
             
