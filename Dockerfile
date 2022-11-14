@@ -11,5 +11,6 @@ RUN wget https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realS
 EXPOSE 8000
 WORKDIR /code/app/
 COPY src src
+COPY app.py .
 # CMD python3 -u src/server.py
 ENTRYPOINT sanic src.server:server --host 0.0.0.0 --port 8000

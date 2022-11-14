@@ -16,7 +16,6 @@ import os.path as osp
 import base64
 import traceback
 
-
 def wget(url: str, path: str) -> str:
     r = requests.get(url, allow_redirects=True)
     print(f'downloading file {url} to {path}')
